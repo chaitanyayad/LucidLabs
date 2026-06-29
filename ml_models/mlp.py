@@ -31,7 +31,7 @@ def mlp(X_train, X_test, y_train, y_test, params=None, task="Classification"):
         max_iter=max_iter,
         random_state=42,
         early_stopping=_supports_early_stop,
-        validation_fraction=0.1 if _supports_early_stop else 0.1,
+        validation_fraction=0.1,
         n_iter_no_change=15,
     )
 

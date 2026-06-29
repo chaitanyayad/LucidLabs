@@ -116,7 +116,7 @@ CLF_DATASETS = {
 }
 REG_DATASETS = {
     "Auto MPG":                      {"id": 9,   "target": "mpg",    "desc": "7 features · 398 rows"},
-    "Concrete Compressive Strength": {"id": 165, "target": "Concrete compressive strength(MPa, megapascals) ",
+    "Concrete Compressive Strength": {"id": 165, "target": "Concrete compressive strength(MPa, megapascals)",
                                                                       "desc": "8 features · 1 030 rows"},
     "Wine Quality — Red":            {"id": 186, "target": "quality","desc": "11 features · 1 599 rows"},
     "Abalone":                       {"id": 1,   "target": "Rings",  "desc": "8 features · 4 177 rows"},
@@ -131,7 +131,10 @@ REG_MODELS = ["Linear Regression","Gradient Boosting Regressor","AdaBoost Regres
 def fetch_uci(dataset_id: int) -> pd.DataFrame:
     from ucimlrepo import fetch_ucirepo
     ds = fetch_ucirepo(id=dataset_id)
-    return pd.concat([ds.data.features, ds.data.targets], axis=1)
+    parts = [p for p in (ds.data.features, ds.data.targets) if p is not None]
+    df = pd.concat(parts, axis=1)
+    df.columns = df.columns.str.strip()
+    return df
 
 @st.cache_data
 def _col_info(df: pd.DataFrame) -> pd.DataFrame:
@@ -355,6 +358,17 @@ with tab_uci:
                     meta   = catalogue[chosen]
                     df_raw = fetch_uci(meta["id"])
                     target = meta["target"]
+                    # if exact name missing, find closest stripped match
+                    if target not in df_raw.columns:
+                        match = next(
+                            (c for c in df_raw.columns if c.strip() == target.strip()),
+                            None
+                        )
+                        if match is None:
+                            st.error(f"Could not find target column '{target}' in dataset. "
+                                     f"Available columns: {df_raw.columns.tolist()}")
+                            st.stop()
+                        target = match
                     if isinstance(df_raw[target], pd.DataFrame):
                         df_raw[target] = df_raw[target].iloc[:, 0]
                     if meta["id"] == 45:
@@ -473,7 +487,7 @@ with t_di:
                 axes[i].set_title(col, fontsize=8, color="#A5B4FC")
                 axes[i].tick_params(labelsize=6, colors="#64748B")
                 for spine in axes[i].spines.values():
-                    spine.set_edgecolor("rgba(99,102,241,0.2)")
+                    spine.set_edgecolor((99/255, 102/255, 241/255, 0.2))
             for j in range(i+1, len(axes)):
                 axes[j].set_visible(False)
             plt.tight_layout(); st.pyplot(fig3); plt.close()
@@ -916,7 +930,8 @@ if st.button("Train Model", type="primary", use_container_width=True):
             linear_regression(X_train, X_test, y_train, y_test, params)
         elif algo in ("Random Forest","Random Forest (Regressor)"):
             from ml_models.ran_for import random_forest_classifier
-            random_forest_classifier(X_train, X_test, y_train, y_test, params, feature_names)
+            _rf_task = "Classification" if algo == "Random Forest" else "Regression"
+            random_forest_classifier(X_train, X_test, y_train, y_test, params, feature_names, _rf_task)
         elif algo == "Gradient Boosting":
             from ml_models.gradient_boost import gradient_boosting
             gradient_boosting(X_train, X_test, y_train, y_test, params, feature_names, "Classification")
