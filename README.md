@@ -1,4 +1,5 @@
 # LucidLabs — Learn Machine Learning by Doing It
+demo live at https://lucidlabs-jinvswjyw3b3ralpnzbsut.streamlit.app/
 
 > An interactive ML education platform built with Streamlit. Upload a dataset, auto-detect the task, explore your data, clean it, train any of 11 algorithms with tunable hyperparameters, and get an in-depth explanation of how the model works — all in one app, no code required.
 
