@@ -8,6 +8,8 @@ import seaborn as sns
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
+import io
+import joblib
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler, MinMaxScaler, RobustScaler
@@ -1081,6 +1083,27 @@ if st.button("Train Model", type="primary", use_container_width=True):
             fig_err.update_layout(title="Absolute error vs actual value",
                                   xaxis_title="Actual", yaxis_title="Absolute Error")
             st.plotly_chart(fig_err, use_container_width=True)
+
+if st.session_state.model is not None:
+    st.divider()
+    st.subheader("Download Trained Model")
+    buf = io.BytesIO()
+    joblib.dump(st.session_state.model, buf)
+    buf.seek(0)
+    fname = f"{algo.replace(' ', '_').lower()}_model.pkl"
+    st.download_button(
+        label="Download model (.pkl)",
+        data=buf,
+        file_name=fname,
+        mime="application/octet-stream",
+        use_container_width=True,
+    )
+    st.caption(
+        "Saved with joblib — load it back with `joblib.load('%s')`. "
+        "If you standardised features before training, apply the same "
+        "`StandardScaler` transform to new data before calling `.predict()`."
+        % fname
+    )
 
 st.divider()
 if st.button("Start Over", use_container_width=True):
